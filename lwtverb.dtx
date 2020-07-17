@@ -1,0 +1,1064 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2020 by Alexander Vasilevsky (kalaider) <a.kalaider@yandex.ru>
+% ---------------------------------------------------------------------------
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+%
+% The Current Maintainer of this work is Alexander Vasilevsky.
+%
+% This work consists of the files lwtverb.dtx and lwtverb.ins
+% and the derived filebase lwtverb.sty.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{lwtverb.dtx}
+
+% \pkg{hyperref} loads \pkg{url} internally,
+% here is the best we can do for now
+\PassOptionsToPackage{obeyspaces, spaces}{url}
+\PassOptionsToPackage{obeyspaces, spaces}{xurl}
+\documentclass{l3doc}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{microtype}
+
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{mdframed}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{fancyvrb}
+\usepackage{fvextra}
+\usepackage{xurl}
+
+\usepackage{lwtverb}[2020/07/16]
+
+\setlength{\parindent}{0pt}
+\addtolength{\parskip}{0.5\baselineskip}
+
+\mdfdefinestyle{example}{
+    skipbelow=0cm,
+}
+\newmdenv[style=example]{examplebox}
+
+\captionsetup[table]{justification=centering}
+
+\EnableCrossrefs
+\RecordChanges
+
+\newcommand\opt[1]{\textsf{#1}} % typeset package options
+
+\def\t{\lwttt}
+\def\c{\lwtcode}
+\def\thispkg{\pkg{lwtverb}}
+
+\newenvironment{exampletbl}{%
+    \setlength\tabcolsep{0pt}%
+    \setlength{\extrarowheight}{1ex}%
+    \begin{tabular}}{\end{tabular}}
+
+\newcolumntype{P}[1]{>{\begin{minipage}[t]{#1}\arraybackslash} c <{\vspace{1ex}\end{minipage}}}
+\newcolumntype{F}{P{0.3\textwidth}}
+
+\DeclareUrlCommand\xurltt{\urlstyle{tt}}
+
+\begin{document}
+  \DocInput{lwtverb.dtx}
+  \PrintChanges
+\end{document}
+%</driver>
+
+%<*package>
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{lwtverb}[2020/07/16 1.0 Yet another inline verbatim typesetting]
+\RequirePackage{xparse}     % powerful command syntax
+\RequirePackage{xkeyval}    % key-value options for package
+\RequirePackage{options}    % key-value options for commands
+\RequirePackage{newverbs}   % superior to detokenize
+%</package>
+
+% \fi
+%
+% \changes{1.0}{2020/07/16}{The first version}
+%
+% \DoNotIndex{\newcommand,\newenvironment}
+%
+% \providecommand*{\url}{\texttt}
+% \title{The \pkg{lwtverb} package}
+% \author{Alexander Vasilevsky (kalaider) \\ \url{a.kalaider@yandex.ru}}
+%
+% \maketitle
+
+
+
+% \section{Introduction}
+%
+% There are many approaches to \t{text written in typewriter font}.
+% Basic approach of using just \cs{tt} or \cs{texttt} does not support
+% hyphenation and cannot be hard-wrapped, potentially causing overfull
+% hbox warnings. Moreover, it is almost inappropriate for typesetting
+% code as all special characters must be escaped manually.
+%
+% Verbatim-like commands help here but they fail to break properly
+% (\cs{verb}) or produce too ragged results (\cs{Verb} from \pkg{fancyvrb}
+% with \t{breaklines} and \t{breakanywhere} options from \pkg{fvextra}).
+% \pkg{minted} does not support breaking inline code at all. \pkg{url} or
+% \pkg{xurl}-based solutions handle special characters inconsistently
+% and have some limitations.
+%
+% {\thispkg} tries to provide breakable and justifyable inline
+% verbatim command. What follows next is side-by-side comparison of
+% different \cs{lwtverb} variants and \cs{lwtverb} with other viable
+% approaches.
+%
+% \Cref{sec:features} describes features {\thispkg} provides.
+% \Cref{sec:examples} shows a number of usage examples, some
+% spacing tweaks ``in action'', comparison to alternative approaches.
+% \Cref{sec:usage} and \cref{sec:options} describe command
+% usage and available options. See \cref{sec:alternatives} for
+% textual comparison to other approaches and \cref{sec:limitations}
+% to learn about {\thispkg} limitations.
+
+
+
+% \section{Features}\label{sec:features}
+%
+% {\thispkg} provides a number of features useful for typesetting
+% code and regular text in typewriter font. This section duscusses
+% what it can. See \cref{sec:limitations} for what it cannot.
+%
+% \begin{itemize}
+%     \item Justifyable and breakable text in typewriter font.
+%     \item Line break can be marked with hyphen or any pair
+%         of user-provided symbols.
+%     \item If line break occurs at the space character, line
+%         break is not indicated.
+%     \item Subsequent spaces can be leaved as is, collapsed to
+%         a single space or removed entirely. If line break
+%         occurs between two space characters, it is configuration
+%         dependent whether thay are removed or retained verbatim.
+%     \item Individual characters can be decorated. A variant of
+%         decoration function takes two arguments: the current
+%         character being typeset and its predecessor.
+%     \item Spaces can be replaces with custom characters so they
+%         may be highlighted and preserved.
+% \end{itemize}
+
+
+
+% \section{Examples}\label{sec:examples}
+%
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{*{3}{|F| p{1em}}}
+%         Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna. &&
+%         Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna. &&
+%         Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.
+%     \end{exampletbl}
+%     \caption[]{Here is how normal {\LaTeX} renders the same text three times (just for comparison)}
+% \end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{*{3}{|F| p{1em}}}
+%         \c|\lwttt[b]{...}| &&
+%         \c|\lwttt[h]{...}| &&
+%         \c|\lwttt[w]{...}| \\\hline
+%         \lwttt[b]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[h]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[w]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.}
+%     \end{exampletbl}
+%     \caption[]{Here is how \thispkg's \cs{lwttt} renders the same text with different options applied: \t{breakline}, \t{hyphenate} and \t{wrapline}}
+% \end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{*{3}{|F| p{1em}}}
+%         \c!\lwtverb|...|!           &&
+%         \c!\verb|...|!              &&
+%         \c!\Verb[breaklines, breakanywhere]|...|!  \\\hline
+%         \lwtverb|Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.| &&
+%         \verb|Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.| &&
+%         \Verb[breaklines, breakanywhere]|Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.|\\
+%         \lwtverb|With superduperveeerylooong words and words_with_special_characters.| &&
+%         \verb|With superduperveeerylooong words and words_with_special_characters.| &&
+%         \Verb[breaklines, breakanywhere]|With superduperveeerylooong words and words_with_special_characters.|
+%     \end{exampletbl}
+%     \caption[]{Comparison to \LaTeX{}'s \cs{verb} and \pkg{fancyvrb}'s \cs{Verb} (with \t{breaklines} option from \pkg{fvextra})}
+% \end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{*{3}{|F| p{1em}}}
+%         \c!\lwtttt{...}!  &&
+%         \c!\justtt{...}!  &&
+%         \c!\xurltt{...}!  \\\hline
+%         \lwttt{Use other text with superduperveeerylooong words and words_with_special_characters, e.g. urls: http://example.com/hard-to-break-it-properly. Moreover, look at ``<<'' and ``>>'' symbols, they look different.} &&
+%         \justtt{Use other text with superduperveeerylooong words and words\_with\_special\_characters, e.g. urls: http://example.com/hard-to-break-it-properly. Moreover, look at ``<<'' and ``>>'' symbols, they look different.} \textit{(needs manual escaping)} &&
+%         \xurltt{Use other text with superduperveeerylooong words and words_with_special_characters, e.g. urls: http://example.com/hard-to-break-it-properly. Moreover, look at ``<<'' and ``>>'' symbols, they look different.} \\
+%         \lwttt{\commands, e.g. \LaTeX{}, may produce extra spaces.} &&
+%         \justtt{\cs{commands}, e.g. \cs{LaTeX}\{\}, may produce extra spaces.} \textit{(needs manual escaping)} &&
+%         \xurltt{\commands, e.g. \LaTeX{}, may produce extra spaces.} \\\hline
+%         \c!\lwtverb|...|!  &&
+%         \c!\justverb{...}! &&
+%         \c!\xurltt|...|!  \\\hline
+%         \lwtverb|\commands, e.g. \LaTeX{}, may produce extra spaces.| &&
+%         \justverb{\commands, e.g. \LaTeX{}, may produce extra spaces.} &&
+%         \xurltt|\commands, e.g. \LaTeX{}, may produce extra spaces.|
+%     \end{exampletbl}
+%     \caption[]{Comparison to \cs{justtt}, \cs{justverb} and \pkg{xurl}'s
+%                \cs{url} with the \t{obeyspaces} package option. \emph{Note also that \pkg{hyperref}
+%                does actually interfere with \pkg{url}, so the result shown above is
+%                somewhat far from what it should/may be. See \cref{sec:alternatives} for discussion}}
+%     \label{table:this-justtt-xurltt}
+% \end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{*{3}{|F| p{1em}}}
+%         \c|\lwttt[w,poskrn=0.5em]{...}| &&
+%         \c|\lwttt[w,negkrn=0.5em]{...}| &&
+%         \c|\lwttt[w,monospaced]{...}|   \\\hline
+%         \lwttt[w,poskrn=0.5em]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[w,negkrn=0.5em]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[w,monospaced  ]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.}
+%     \end{exampletbl}
+%     \caption[]{Same text typeset with \thispkg's \cs{lwttt} with interletter spacing adjusted differently}
+% \end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{*{3}{|F| p{1em}}}
+%         \c|\lwttt[w,m,possp=6em]{...}| &&
+%         \c|\lwttt[w,m,negsp=1em]{...}| &&
+%         \c|\lwttt[w,monospaced]{...}|  \\\hline
+%         \lwttt[w,m,possp=6em]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[w,m,negsp=1em]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[w,monospaced ]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.}
+%     \end{exampletbl}
+%     \caption[]{Same text typeset with \thispkg's \cs{lwttt} with interword spacing adjusted differently}
+% \end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{exampletbl}{|P{0.15\textwidth}| p{0.5em} |P{0.20\textwidth}| p{0.5em} |P{0.25\textwidth}| p{0.5em} |P{0.30\textwidth}|}
+%         \lwttt[breaksymr=$\bullet$,breaksyml=$\bullet$]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[breaksymr=$\bullet$,breaksyml=$\bullet$]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[breaksymr=$\bullet$,breaksyml=$\bullet$]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.} &&
+%         \lwttt[breaksymr=$\bullet$,breaksyml=$\bullet$]{Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut purus elit, vestibulum ut, placerat ac, adipiscing vitae, felis. Curabitur dictum gravida mauris. Nam arcu libero, nonummy eget, consectetuer id, vulputate a, magna.}
+%     \end{exampletbl}
+%     \caption[]{Same text in columns of different width}
+% \end{table}
+
+
+
+% \section{Usage}\label{sec:usage}
+%
+% \DescribeMacro{\lwtverb}
+% Using {\thispkg} is just as simple as regular \cs{verb}. Here is an example of \cs{lwtverb}:
+%
+% \begin{examplebox}
+% \c!While {\LaTeX} provides \verb+\verb+ allowing us to output things verbatim, e.g. \verb|{\LaTeX}|, {\thispkg} provides \lwtverb+\lwtverb+ allowing the same, e.g. \lwtverb|{\LaTeX}|.!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% While {\LaTeX} provides \verb+\verb+ allowing us to output things verbatim, e.g. \verb|{\LaTeX}|, {\thispkg} provides \lwtverb+\lwtverb+ allowing the same, e.g. \lwtverb|{\LaTeX}|.
+% \end{examplebox}
+%
+% \DescribeMacro{\lwtcode}
+% \c!\lwtcode|...|! is just a shorthand for \c!\lwtverb[w]|...|!, i.e.
+% it is a version of \cs{lwtverb} defaulted to \t{wrapline} style.
+% It may be useful for inline code typesetting because it marks wrapped words.
+%
+% \DescribeMacro{\lwttt}
+% \cs{lwttt} is a limited version of \cs{lwtverb} with syntax of a regular
+% command. It may be used in place of \cs{lwtverb} when it is just needed
+% to typeset text without any special characters or commands in it.
+% \cs{lwttt} may introduce extra space after commands. Note additional
+% space after \c|\LaTeX| here: \hbox{\lwttt{{\LaTeX}}}. \cs{lwtverb} handles
+% this properly: \hbox{\lwtverb|{\LaTeX}|}.
+%
+% \DescribeMacro{\justtt}
+% \cs{justtt} is like a normal \cs{texttt} but allows shrinking, stretching
+% and hyphenation by default. Not a verbatim command. Doesn't take any options.
+%
+% \DescribeMacro{\justverb}
+% \cs{jusverb} is like a \cs{justtt} but does its best to handle special
+% characters. Internally highly relies on \cs{detokenize}. Doesn't take any
+% options.
+
+
+
+% \section{Options}\label{sec:options}
+%
+% All \cs{lwtxxx} commands take the same options.
+%
+% \DescribeMacro{decoration=\meta{cmd1}}
+% \DescribeMacro{decoration2=\meta{cmd2}}
+% \DescribeMacro{spacebox=\meta{hbox}}
+% \t{decoration}, \t{decoration2} and \t{spacebox} options allow altering style
+% of individual symbols. The first one takes only a single parameter \meta{cur},
+% the current character. \t{cmd2} takes additionally \meta{prev}, the previous
+% characher. Consider the example:
+%
+% \begin{examplebox}
+% \c!\lwtverb[decoration=\colorbox{lightgray}, spacebox=\framebox{}]|Text with spaces.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \lwtverb[decoration=\colorbox{lightgray}, spacebox=\framebox{}]|Text with spaces.|
+% \end{examplebox}
+%
+% Another example allows different behavior for the first letter of the word.
+%
+% \begin{examplebox}
+% \c!\makeatletter\def\highlight#1#2{\ifx\@sptoken#2\textcolor{red}{#1}\else#1\fi}\makeatother!\\
+% \c!\lwtverb[decoration2=\highlight]|Text with spaces.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \makeatletter\def\highlight#1#2{\ifx\@sptoken#2\textcolor{red}{#1}\else#1\fi}\makeatother
+% \lwtverb[decoration2=\highlight]|Text with spaces.|
+% \end{examplebox}
+%
+%
+% \DescribeMacro{gobble=\meta{verbatim, no, extra, all}}
+% The \t{gobble} option allows one to alter the behavior
+% of {\thispkg} regarding spaces.
+%
+% The \t{verbatim} option
+% value forces {\thispkg} to treat all spaces as normal
+% characters except that line breaks near the spaces are
+% not marked with \t{breaksymr} and \t{breaksyml}.
+%
+% The default \t{no} value allows spaces at the beginning
+% and at the end of the line to be gobbled. It is the default
+% behavior {\LaTeX} itself has. If \t{spacebox} is provided,
+% \t{no} behaves exactly as \t{verbatim}.
+%
+% The \t{extra} value leaves only a single space removing
+% all subsequent spaces (may be useful in combination with
+% \t{spacebox}).
+%
+% The \t{all} value removes all spaces completely (even if
+% \t{spacebox} is provided).
+%
+% Here is how one may get all spaces obeyed and highlighted with dots.
+%
+% \begin{examplebox}
+% \c!\lwtcode[spacebox=\hbox to 0.5em {$\hfill\cdot\hfill$}]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{4.5cm}
+% \lwtcode[spacebox=\hbox to 0.5em {$\hfill\cdot\hfill$}]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|
+% \end{minipage}
+% \end{examplebox}
+%
+% As this behavior is quite common, \t{showspaces} option is a
+% shorthand for the desired behavior above.
+% Here is how each option affects the outcome.
+% \c|<value>| takes the \t{no}, \t{verbatim}, \t{extra}
+% and \t{all} value correspondingly.
+%
+% \begin{examplebox}
+% \c!\lwtcode[gobble=<value>]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{6cm}
+% \lwtcode[gobble=no]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|
+% \end{minipage}
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{6cm}
+% \lwtcode[gobble=verbatim]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|
+% \end{minipage}
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{6cm}
+% \lwtcode[gobble=extra]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|
+% \end{minipage}
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{6cm}
+% \lwtcode[gobble=all]|Text with a number of words. Spaces: 1[ ], 2[  ], 3[   ], 4[    ], 5[     ]. Note that breaks at spaces are not marked with arrow sign, but_long_words_that_actually_break_somewhere_still_are.|
+% \end{minipage}
+% \end{examplebox}
+%
+% Here is how each option behaves on the input consisting almost entirely of spaces:
+%
+% \begin{examplebox}
+% \begin{tabular}{r c}
+%     \t{no}        & ``\lwtcode[gobble=no]|   !   |''       \\
+%     \t{verbatim}  & ``\lwtcode[gobble=verbatim]|   !   |''\\
+%     \t{extra}     & ``\lwtcode[gobble=extra]|   !   |''   \\
+%     \t{all}       & ``\lwtcode[gobble=all]|   !   |''
+% \end{tabular}
+% \end{examplebox}
+%
+%
+% \DescribeMacro{breaksymr=\meta{hbox}}
+% \DescribeMacro{breaksyml=\meta{hbox}}
+% \t{breaksymr} and \t{breaksyml} allow to specify line break
+% indicators, e.g. hyphen, arrow, etc. {\thispkg} effectively
+% inserts \c!\discretionary{!\meta{breaksymr}\c!}{!\meta{breaksyml}\c!}{}!
+% after each non-space character of the input.
+%
+% \begin{examplebox}
+% \c!\lwtverb[breaksyml=$\triangleleft$, breaksymr=$\triangleright$]|Long_word_that_should_be_hyphenated.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{3cm}
+% \lwtverb[breaksyml=$\triangleleft$, breaksymr=$\triangleright$]|Long_word_that_should_be_hyphenated.|
+% \end{minipage}
+% \end{examplebox}
+%
+%
+% \DescribeMacro{poskrn=\meta{length}}
+% \DescribeMacro{negkrn=\meta{length}}
+% Specifies interletter stretching (\t{poskrn}) and shrinking (\t{negkrn}) boundaries.
+%
+% \begin{examplebox}
+% \c!\lwtverb[poskrn=1em, negkrn=0.3em]|This_text_must_be_very_loose <filler_text_that_should_wrap>|!\\
+% \c!\lwtverb[poskrn=1em, negkrn=0.3em]|This_text_must_be_very_tight <another_filler>|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{7cm}
+% \lwtverb[poskrn=1em, negkrn=0.3em]|This_text_must_be_very_loose <filler_text_that_should_wrap>|\\
+% \lwtverb[poskrn=1em, negkrn=0.3em]|This_text_must_be_very_tight <another_filler>|
+% \end{minipage}
+% \end{examplebox}
+%
+%
+% \DescribeMacro{possp=\meta{length}}
+% \DescribeMacro{negsp=\meta{length}}
+% Specifies interword stretching (\t{possp}) and shrinking (\t{negsp}) boundaries.
+%
+% \begin{examplebox}
+% \c!\lwtverb[possp=1em, negsp=0.3em]|Spaces here must be very wide <filler_text_that_should_wrap>|!\\
+% \c!\lwtverb[possp=1em, negsp=0.3em]|Spaces here must be very short <another_filler>|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{7.4cm}
+% \lwtverb[possp=1em, negsp=0.4em]|Spaces here must be reasonably wide <filler_text_that_should_wrap>|\\
+% \lwtverb[possp=1em, negsp=0.4em]|Spaces here must be very short <another_filler>|
+% \end{minipage}
+% \end{examplebox}
+%
+%
+% \DescribeMacro{breakhandler=\meta{cmd3}}
+% Specifies a command with a three parameters, namely \meta{cur},
+% \meta{prev}, \meta{discretionary}, i.e. current char, previous char
+% and discretionary box. One should return \meta{discretionary} in
+% order to allow break and nothing to prevent it. E.g. here is how
+% \t{keepwords}-like behavior may be achieved.
+%
+% \begin{examplebox}
+% \c!\def\ignorethree#1#2#3{}!\\
+% \c!\lwtverb[breakhandler=\ignorethree]|Will not be able to break words. Long-word-that-is-to-be-normally-hyphenated will be left as is.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{5cm}
+% \def\ignorethree#1#2#3{\relax}
+% \lwtverb[breakhandler=\ignorethree]|Will not be able to break words. Long-word-that-is-to-be-normally-hyphenated will be left as is.|
+% \end{minipage}
+% \end{examplebox}
+%
+% One may imagine a requirement to break only at a certain symbol,
+% e.g. hyphen. Here is how it may be achieved.
+%
+% \begin{examplebox}
+% \c!\def\breakhyph#1#2#3{\if-#2#3\fi}!\\
+% \c!\lwtverb[breakhandler=\breakhyph]|Will not be able to break words. Long-word-that-is-to-be-normally-hyphenated will break at ``-''.|!
+% \end{examplebox}
+%
+% \begin{examplebox}
+% \begin{minipage}{5cm}
+% \def\breakhyph#1#2#3{\if-#2#3\fi}
+% \lwtverb[breakhandler=\breakhyph]|Will not be able to break words. Long-word-that-is-to-be-normally-hyphenated will break at ``-''.|
+% \end{minipage}
+% \end{examplebox}
+%
+% Here we test if the previous character was a hyphen and if so
+% insert discretionary.
+%
+%
+% \DescribeMacro{debug}
+% Synonym of \c!decoration=\colorbox{lightgray}!.
+%
+% \DescribeMacro{breakline, b}
+% Synonym of \c!breaksymr={}, breaksyml={}!.
+%
+% \DescribeMacro{wrapline, w}
+% Synonym of \c!breaksymr={\tiny$\hookrightarrow$}, breaksyml={}!.
+%
+% \DescribeMacro{hyphenate, h}
+% Synonym of \c!breaksymr={-}, breaksyml={}!.
+%
+% \DescribeMacro{monospaced, m}
+% Synonym of \c!poskrn=0pt, negkrn=0pt!.
+%
+% \DescribeMacro{showspaces}
+% Synonym of \c!spacebox=\hbox to 0.5em {\textcolor{gray}{$\hfill\cdot\hfill$}}!.
+%
+% \DescribeMacro{obeyspaces}
+% Synonym of \c!gobble=verbatim!.
+%
+% \DescribeMacro{nospaces}
+% Synonym of \c!gobble=all!.
+
+
+
+% \section{Comparison to other approaches}\label{sec:alternatives}
+
+% There are plenty of packages and/or tecniques that provide
+% similar functionality. Why then {\thispkg}? Here is a brief
+% overview of alternatives to {\thispkg} that reveals some
+% subtleties of each of them.
+%
+% \begin{description}[style=nextline]
+%     \item[\cs{tt}, \cs{texttt}] Requires manual escaping of
+%         special characters. Does not support hyphenation by
+%         default.
+%     \item[\cs{justtt}] Simple extension of the previous approach.
+%         See \href{https://tex.stackexchange.com/a/799/203829}{%
+%         this StackExchange answer} for details. \cs{detokenize}
+%         handles most of the special characters automatically,
+%         but fails with commands, e.g. \c|\detokenize{\LaTeX{}}|
+%         introduces unwanted extra space after the command name:
+%         \texttt{\detokenize{\LaTeX{}}}. \cs{detokenize} also fails to
+%         preserve \c|<<| and \c|>>| resulting in \texttt{\detokenize{<<}}
+%         and \texttt{\detokenize{>>}} correspondingly. {\thispkg} provides
+%         \cs{justtt} (without \cs{detokenize}) and \cs{justverb}
+%         (\cs{detokenize}-based) just for completeness.
+%     \item[{\LaTeX}'s \cs{verb}] Does not allow line breaks inside
+%         words. May cause overfull hboxes.
+%     \item[\pkg{fancyvrb}'s \cs{Verb}] With the help of \pkg{fvextra}
+%         supports line breaks at space only. May cause overfull
+%         hboxes with long enough words. See examples above. \pkg{fancyvrb}
+%         does not allow to insert line break marks.
+%     \item[\pkg{minted}'s \cs{mintinline}] Does not allow to break
+%         inline code at all.
+%     \item[\pkg{url}'s or \pkg{xurl}'s \cs{url}] Does its job well but
+%         handles some characters inconsistently (e.g. \c|<<| is typeset
+%         in typewriter font, but \c|>>| is not). Suffers from the same
+%         problems as \cs{detokenize} does. \pkg{hyperref} may interfere
+%         with \pkg{url}. Actually, it may be seen on \cref{table:this-justtt-xurltt}.
+%         \cs{xurltt} from the example above is defined as follows:
+%         \c|\DeclareUrlCommand\xurltt{\urlstyle{tt}}|.
+% \end{description}
+
+
+
+% \section{Limitations}\label{sec:limitations}
+
+% There are many limitations the author is currently aware of:
+%
+% \begin{itemize}
+%     \item Missing support for inline math.
+%     \item Hyphenation does not take into accout whether
+%         it is semantically allowed to break at certain position.
+%         True hyphenation is desirable for typesetting text but
+%         in such case simple \cs{justtt}-based approach would
+%         be enough.
+%     \item Only some of the command options have their package
+%         option equivalents. The user may, however, simply define
+%         his own command as {\thispkg} does with \cs{lwtcode}.
+%     \item There is no option to trim leading and trailing spaces.
+%         But is such option really necessary?
+%     \item As with all other inline verbatim commands, \cs{lwtverb}
+%         and others are fragile. It means that \cs{lwtverb} (but not
+%         \cs{lwttt}) cannot be used in section names, captions, it may
+%         conflict with some tabular environments. \pkg{fvextra} fixes
+%         a lot of \pkg{fancyvrb}'s \cs{Verb} fragility issues, but not all
+%         and at some cost (whitespace preservation, alternative syntax
+%         with its own limitations, etc.).
+%     \item \cs{lwtverb} may behave strangly when passed as an argument
+%         to other commands (e.g. \c!\id{\lwtverb|{\LaTeX}|}!
+%         becomes ``{\def\id#1{#1}\id{\lwtverb|{\LaTeX}|}}'' instead of
+%         ``\lwtverb|{\LaTeX}|'', where \cs{id} is defined
+%         as follows: \c|\def\id#1{#1}|.
+% \end{itemize}
+
+
+
+% \section{Plans}\label{sec:plans}
+%
+% There currently are no benifits of migration from
+% \pkg{newverbs} to \pkg{fancyvrb}. It had actually
+% been implemented as a case study but then was rejected.
+% Adopting \pkg{fvextra} solution to robustness requires
+% some care. Straightforward approach fails immediately
+% because of the way \pkg{fvextra} handles its input~---
+% it conflicts with how \pkg{xparse} parses its optional
+% arguments. \pkg{fvextra} has some limitations too
+% regarding whitespace preservation, requirement of
+% balanced curly braces in curly-braced input, etc. but
+% it provides robust \cs{Verb}. {\thispkg} differentiates
+% between \cs{lwtverb} and \cs{lwttt} (the latter is
+% actually robust since it is not a true verbatim command)
+% and \cs{lwttt} is supposed to be used in titles, but
+% as always it fails to typeset \cs{commands} properly.
+% One may solve it using options (such as \t{nospaces})
+% having something like \c!\lwttt{my `}\lwttt[nospaces]{\command}\lwttt{' command}!
+% resulting in ``\lwttt{my `}\lwttt[nospaces]{\command}\lwttt{' command}''
+% but it is too complex and verbose to be used in practice.
+
+
+
+% \StopEventually{}
+%
+% \section{Implementation}
+%
+% \iffalse
+%<*package>
+% \fi
+
+% \subsection{Package Options}
+%
+% Additional stretching to be added after each non-space char
+%    \begin{macrocode}
+\DeclareOptionX{poskrn}{%
+    \DeclareDocumentCommand\@lwtverb@poskrn{}{#1}}
+%    \end{macrocode}
+% Additional shrinking to be added after each non-space char
+%    \begin{macrocode}
+\DeclareOptionX{negkrn}{%
+    \DeclareDocumentCommand\@lwtverb@negkrn{}{#1}}
+%    \end{macrocode}
+% Additional stretching to be added after each space char
+%    \begin{macrocode}
+\DeclareOptionX{possp}{%
+    \DeclareDocumentCommand\@lwtverb@possp{}{#1}}
+%    \end{macrocode}
+% Additional shrinking to be added after each space char
+%    \begin{macrocode}
+\DeclareOptionX{negsp}{%
+    \DeclareDocumentCommand\@lwtverb@negsp{}{#1}}
+%    \end{macrocode}
+% Handle unknown options
+%    \begin{macrocode}
+\DeclareOptionX*{%
+    \PackageWarning{lwtverb}{`\CurrentOption' ignored}}
+%    \end{macrocode}
+% Some reasonable defaults
+%    \begin{macrocode}
+\ExecuteOptionsX{
+    poskrn=0.3pt,    % higher values result in 'a  b  c  d' (too loose)
+    negkrn=0.3pt,    % higher values result in 'abcd' (too tight)
+    possp=0.3em,     % higher values result in 'abcd   efgh'
+    negsp=0.1em,     % higher values result in 'abcdefgh'
+}
+%    \end{macrocode}
+% Done with package options
+%    \begin{macrocode}
+\ProcessOptionsX\relax
+%    \end{macrocode}
+
+% \subsection{Command Options}
+%
+%    \begin{macrocode}
+\long\def\@firstoffour#1#2#3#4{#1}
+\long\def\@fourthoffour#1#2#3#4{#4}
+
+\options{
+    /lwtverb/.new family,
+    % options
+    /lwtverb/decoration/.new value = \relax,
+    /lwtverb/decoration2/.new value = \relax,
+    /lwtverb/spacebox/.new value = \relax,
+    /lwtverb/breaksymr/.new value = {},
+    /lwtverb/breaksyml/.new value = {},
+    /lwtverb/poskrn/.new length = \@lwtverb@poskrn,
+    /lwtverb/negkrn/.new length = \@lwtverb@negkrn,
+    /lwtverb/possp/.new length  = \@lwtverb@possp,
+    /lwtverb/negsp/.new length  = \@lwtverb@negsp,
+    /lwtverb/gobble/.new choice = { verbatim, no, extra, all },
+    /lwtverb/gobble = no,
+    /lwtverb/breakhandler/.new value = \@fourthoffour\relax,
+    % styles
+    /lwtverb/debug/.new style* = {
+        /lwtverb/decoration = \colorbox{lightgray},
+    },
+    /lwtverb/breakline/.new style* = {
+        /lwtverb/breaksymr = {},
+        /lwtverb/breaksyml = {},
+    },
+    /lwtverb/wrapline/.new style* = {
+        /lwtverb/h,
+        /lwtverb/breaksymr = {},
+        /lwtverb/breaksyml = {\tiny$\hookrightarrow$},
+    },
+    /lwtverb/hyphenate/.new style* = {
+        /lwtverb/breaksymr = {-},
+        /lwtverb/breaksyml = {},
+    },
+    /lwtverb/monospaced/.new style* = {
+        /lwtverb/poskrn = 0pt,
+        /lwtverb/negkrn = 0pt,
+    },
+    /lwtverb/showspaces/.new style* = {
+        /lwtverb/spacebox=\hbox to 0.5em {%
+            \textcolor{gray}{$\hfill\cdot\hfill$}},
+    },
+    /lwtverb/obeyspaces/.new style* = {
+        /lwtverb/gobble=verbatim,
+    },
+    /lwtverb/nospaces/.new style* = {
+        /lwtverb/gobble=all,
+    },
+    /lwtverb/keepwords/.new style* = {
+        /lwtverb/breakhandler = \@firstoffour\relax,
+    },
+    % shorthands
+    /lwtverb/b/.new style* = { /lwtverb/breakline },
+    /lwtverb/w/.new style* = { /lwtverb/wrapline },
+    /lwtverb/h/.new style* = { /lwtverb/hyphenate },
+    /lwtverb/m/.new style* = { /lwtverb/monospaced }
+}
+%    \end{macrocode}
+
+% \subsection{Character Decorator}
+%
+% \begin{macro}{\@lwtverb@makespace}
+%    Creates properly-sized \cs{hspace} from (implicitly
+%    passed) options. This space replaces the actual space
+%    character of the input string.
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@makespace{}{%
+%    \end{macrocode}
+%    Allow {\LaTeX} to remove spaces automatically at the
+%    beginning and at the end of the line; use unstarred
+%    \cs{hspace} version for this purpose.
+%    \begin{macrocode}
+    \hspace{0.4em%
+        plus \option{/lwtverb/possp}%
+        minus \option{/lwtverb/negsp}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@makehardspace}
+%    Creates properly-sized \cs{hspace} from (implicitly
+%    passed) options. This space replaces the actual space
+%    character of the input string and cannot be gobbled.
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@makehardspace{}{%
+%    \end{macrocode}
+%    Prevent {\LaTeX} from removing spaces automatically at the
+%    beginning and at the end of the line; use starred
+%    \cs{hspace} version for this purpose.
+%    \begin{macrocode}
+    \hspace*{0.4em%
+        plus \option{/lwtverb/possp}%
+        minus \option{/lwtverb/negsp}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@makekern}
+%    Creates properly-sized \cs{hspace} from (implicitly
+%    passed) options. This space is put between letters in
+%    words to make them shirnkable and stretchable enough.
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@makekern{}{%
+%    \end{macrocode}
+%    Allow LaTeX to remove spaces automatically at the
+%    beginning and at the end of the line; use unstarred
+%    \cs{hspace} version for this purpose
+%    \begin{macrocode}
+    \hspace*{0pt%
+        plus \option{/lwtverb/poskrn}%
+        minus \option{/lwtverb/negkrn}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@makespacekern}
+%    Creates properly-sized \cs{hspace} from (implicitly
+%    passed) options. This space is put between letter and
+%    decorated space to make them shirnkable and stretchable.
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@makespacekern{}{%
+%    \end{macrocode}
+%    Use starred (non-breakable) version of \cs{hspace}
+%    to allow the following discretionary to do its job.
+%    \begin{macrocode}
+    \hspace{0pt%
+        plus \option{/lwtverb/poskrn}%
+        minus \option{/lwtverb/negkrn}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@makediscretionary}
+%    Creates discrtetionary from (implicitly passed) options
+%    that is used to indicate line break.
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@makediscretionary{}{%
+    \discretionary{%
+        \hbox{\option{/lwtverb/breaksymr}}%
+    }{%
+        \hbox{\option{/lwtverb/breaksyml}}%
+    }{}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@decoratedspace}
+%    Creates a box to be used in place of the actual
+%    space character of the input. Unlike \cs{@lwtverb@makespace},
+%    takes \t{spacebox} option into account.
+%    \begin{arguments}
+%        \item The space character (ignored)
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@decoratedspace{m}{%
+    \ifoptionvoid{/lwtverb/spacebox}{%
+        \ifnum\option{/lwtverb/gobble/@ord}=0% verbatim
+            \allowbreak%
+            \@lwtverb@makehardspace%
+        \else%
+            \@lwtverb@makespace%
+        \fi%
+    }{%
+        \@lwtverb@makespacekern%
+        \allowbreak%
+        \option{/lwtverb/spacebox}%
+    }%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@decoratednonspace}
+%    Creates a box to be used in place of the actual
+%    non-space character of the input. Takes
+%    \t{decoration} option into account and does not
+%    apply any interletter spacing.
+%    \begin{arguments}
+%        \item The non-space character
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@decoratednonspace{m m}{%
+    \ifoptionvoid{/lwtverb/decoration2}{%
+        \option{/lwtverb/decoration}{#1}%
+    }{%
+        \option{/lwtverb/decoration2}{#1}{#2}%
+    }%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@lwtverb@breakablechar}
+%    This macro actually does the job of inserting the
+%    interletter glue, interword spacing and potential line
+%    breaks. Almost all options passed to \cs{lwtverb} and
+%    other commands of {\thispkg} are handled here.
+%    \begin{arguments}
+%        \item Current character to be typeset and decorated
+%        \item Previous characher (\cs{relax} for the first)
+%    \end{arguments}
+%    The previous character is used to detect word boundaries
+%    in order not to insert discretionary right before the
+%    space. The motivation for this is simple~--- otherwise
+%    hyphen (or in general a pair of any two symbols) may be
+%    inserted right before the space which is certainly
+%    unpleasant in most cases.
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@breakablechar{m m}{%
+%    \end{macrocode}
+%    Handle spaces separately. If there is a \t{spacebox} option
+%    set, we treat space as a regular character except we should
+%    not insert hyphenation marks.
+%    \begin{macrocode}
+    \ifx\@sptoken#1%
+        \ifcase\option{/lwtverb/gobble/@ord}%
+            % verbatim
+            \@lwtverb@decoratedspace{#1}%
+        \or% no
+            \@lwtverb@decoratedspace{#1}%
+        \or% extra
+            \ifx\@sptoken#2%
+            \else%
+                \@lwtverb@decoratedspace{#1}%
+            \fi%
+        \else% all
+        \fi%
+%    \end{macrocode}
+%    Handle all other non-space characters. Insert additional space
+%    between two non-space characters (i.e. if the previous character is
+%    not a space) and add discretionary to allow line break.
+%    \begin{macrocode}
+    \else%
+        \ifx\@sptoken#2%
+        \else%
+            \@lwtverb@makekern%
+            \option{/lwtverb/breakhandler}{#1}{#2}{\@lwtverb@makediscretionary}%
+        \fi%
+        \@lwtverb@decoratednonspace{#1}{#2}%
+    \fi%
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{Input Processing Routine}
+%
+% \begin{macro}{\@lwtverb@process}
+%    Highly inspired by \href{https://tex.stackexchange.com/a/359201/203829}{%
+%    this StackExchange answer}. Defines internal input processing routine,
+%    which effectively iterates over the input and calls \cs{@lwtverb@breakablechar}
+%    for each character read. The macro itself specifies necessary styles and feeds
+%    the \cs{detokenize}d input to that routine. This macro is intended to be
+%    used in tandem with \cs{Collectverb} from \pkg{newverbs} (or its equivalent).
+%    See \cs{lwtverb} for example of such usage.
+%    \begin{arguments}
+%        \item List of options
+%        \item Introductory command to be issued (e.g. \cs{tt} or \cs{texttt})
+%        \item Finalization command
+%        \item The input to be typeset
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\@lwtverb@process{m m m m}{%
+    {\options{/lwtverb,#1}%
+        \def\gobblechar{\let\xchar= }%
+        \def\assignthencheck{%
+            \afterassignment\xloop\gobblechar}%
+        \let\xprevchar=\relax%
+        \def\xloop{%
+            \ifx\relax\xchar%
+                \let\next=\relax%
+            \else%
+                \@lwtverb@breakablechar{\xchar}{\xprevchar}%
+                \let\xprevchar= \xchar\relax%
+                \let\next=\assignthencheck%
+            \fi%
+            \next}%
+        {#2{\expandafter\assignthencheck\detokenize{#4}\relax}#3}}%
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{User-exposed commands}
+%
+% \begin{macro}{\lwtverb}
+%    The main command provided to the end user. Takes optional
+%    list of arguments. The command is fully analogous to \cs{verb}
+%    in a sense it takes its (last) argument. See usage examples above.
+%    \begin{syntax}
+%        \cs{lwtverb}\oarg{options}\meta{char}\meta{input}\meta{char}
+%    \end{syntax}
+%    \begin{arguments}
+%        \item List of options
+%        \item The input to be typeset
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\lwtverb{O{}}{%
+    \Collectverb{\@lwtverb@process{#1}{\tt}{}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\lwtcode}
+%    Same as \cs{lwtcode} but defaulted to mark wrapped lines instead of
+%    just breaking them.
+%    \begin{syntax}
+%        \cs{lwtcode}\oarg{options}\meta{char}\meta{input}\meta{char}
+%    \end{syntax}
+%    \begin{arguments}
+%        \item List of options
+%        \item The input to be typeset
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\lwtcode{O{}}{\lwtverb[w,#1]}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\lwttt}
+%    Same as \cs{lwtverb} but takes its (last) argument as a normal
+%    command does (i.e. in \c|{...}|). It may be very useful for
+%    typesetting standalone words without special characters because
+%    of its natural syntax.
+%    \begin{syntax}
+%        \cs{lwtverb}\oarg{options}\Arg{input}
+%    \end{syntax}
+%    \begin{arguments}
+%        \item List of options
+%        \item The input to be typeset
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\lwttt{O{} m}{%
+    \@lwtverb@process{#1}{\tt}{}{#2}%
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{Other helpful commands}
+%
+% \begin{macro}{\@lwtverb@justify}
+%    See \href{https://tex.stackexchange.com/a/799/203829}{%
+%    this StackExchange answer} for details.
+%    \begin{macrocode}
+\newcommand*\@lwtverb@justify{%
+  \fontdimen2\font=0.4em% interword space
+  \fontdimen3\font=0.2em% interword stretch
+  \fontdimen4\font=0.1em% interword shrink
+  \fontdimen7\font=0.1em% extra space
+  % \hyphenchar\font=`\- fails in book documentclass for some reason
+  \hyphenchar\font=`-% allowing hyphenation
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\justtt}
+%    Alternative approaches to justified typewriter text based
+%    on just \cs{\@lwtverb@justify}.
+%    \begin{syntax}
+%        \cs{justtt}\Arg{input}
+%    \end{syntax}
+%    \begin{arguments}
+%        \item The input to be typeset
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\justtt{m}{{\tt\@lwtverb@justify{#1}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\jusverb}
+%    Alternative approaches to justified typewriter text based
+%    on \cs{\@lwtverb@justify} + \cs{detokenize}.
+%    \begin{syntax}
+%        \cs{jusverb}\Arg{input}
+%    \end{syntax}
+%    \begin{arguments}
+%        \item The input to be typeset
+%    \end{arguments}
+%    \begin{macrocode}
+\DeclareDocumentCommand\justverb{m}{{\tt\@lwtverb@justify{\detokenize{#1}}}}
+%    \end{macrocode}
+% \end{macro}
+
+%
+% \iffalse
+%</package>
+% \fi
+%
+% \Finale
+\endinput

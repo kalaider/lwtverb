@@ -1,0 +1,235 @@
+%%
+%% This is file `lwtverb.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% lwtverb.dtx  (with options: `package')
+%% 
+%% This file is part of the package lwtverb for use with LaTeX2e.
+%% 
+%% Function: Provides justyfyable and breakable inline verbatim command.
+%% 
+%% This program may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%% 
+%% Please send error reports and suggestions for improvements to
+%%     Alexander Vasilevsky <kalaider@yandex.ru>
+%% 
+%% Alternatively, use github:
+%%     https://github.com/kalaider/lwtverb
+%% 
+
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{lwtverb}[2020/07/16 1.0 Yet another inline verbatim typesetting]
+\RequirePackage{xparse}     % powerful command syntax
+\RequirePackage{xkeyval}    % key-value options for package
+\RequirePackage{options}    % key-value options for commands
+\RequirePackage{newverbs}   % superior to detokenize
+
+
+
+
+
+
+
+
+
+
+
+
+
+\DeclareOptionX{poskrn}{%
+    \DeclareDocumentCommand\@lwtverb@poskrn{}{#1}}
+\DeclareOptionX{negkrn}{%
+    \DeclareDocumentCommand\@lwtverb@negkrn{}{#1}}
+\DeclareOptionX{possp}{%
+    \DeclareDocumentCommand\@lwtverb@possp{}{#1}}
+\DeclareOptionX{negsp}{%
+    \DeclareDocumentCommand\@lwtverb@negsp{}{#1}}
+\DeclareOptionX*{%
+    \PackageWarning{lwtverb}{`\CurrentOption' ignored}}
+\ExecuteOptionsX{
+    poskrn=0.3pt,    % higher values result in 'a  b  c  d' (too loose)
+    negkrn=0.3pt,    % higher values result in 'abcd' (too tight)
+    possp=0.3em,     % higher values result in 'abcd   efgh'
+    negsp=0.1em,     % higher values result in 'abcdefgh'
+}
+\ProcessOptionsX\relax
+
+\long\def\@firstoffour#1#2#3#4{#1}
+\long\def\@fourthoffour#1#2#3#4{#4}
+
+\options{
+    /lwtverb/.new family,
+    % options
+    /lwtverb/decoration/.new value = \relax,
+    /lwtverb/decoration2/.new value = \relax,
+    /lwtverb/spacebox/.new value = \relax,
+    /lwtverb/breaksymr/.new value = {},
+    /lwtverb/breaksyml/.new value = {},
+    /lwtverb/poskrn/.new length = \@lwtverb@poskrn,
+    /lwtverb/negkrn/.new length = \@lwtverb@negkrn,
+    /lwtverb/possp/.new length  = \@lwtverb@possp,
+    /lwtverb/negsp/.new length  = \@lwtverb@negsp,
+    /lwtverb/gobble/.new choice = { verbatim, no, extra, all },
+    /lwtverb/gobble = no,
+    /lwtverb/breakhandler/.new value = \@fourthoffour\relax,
+    % styles
+    /lwtverb/debug/.new style* = {
+        /lwtverb/decoration = \colorbox{lightgray},
+    },
+    /lwtverb/breakline/.new style* = {
+        /lwtverb/breaksymr = {},
+        /lwtverb/breaksyml = {},
+    },
+    /lwtverb/wrapline/.new style* = {
+        /lwtverb/h,
+        /lwtverb/breaksymr = {},
+        /lwtverb/breaksyml = {\tiny$\hookrightarrow$},
+    },
+    /lwtverb/hyphenate/.new style* = {
+        /lwtverb/breaksymr = {-},
+        /lwtverb/breaksyml = {},
+    },
+    /lwtverb/monospaced/.new style* = {
+        /lwtverb/poskrn = 0pt,
+        /lwtverb/negkrn = 0pt,
+    },
+    /lwtverb/showspaces/.new style* = {
+        /lwtverb/spacebox=\hbox to 0.5em {%
+            \textcolor{gray}{$\hfill\cdot\hfill$}},
+    },
+    /lwtverb/obeyspaces/.new style* = {
+        /lwtverb/gobble=verbatim,
+    },
+    /lwtverb/nospaces/.new style* = {
+        /lwtverb/gobble=all,
+    },
+    /lwtverb/keepwords/.new style* = {
+        /lwtverb/breakhandler = \@firstoffour\relax,
+    },
+    % shorthands
+    /lwtverb/b/.new style* = { /lwtverb/breakline },
+    /lwtverb/w/.new style* = { /lwtverb/wrapline },
+    /lwtverb/h/.new style* = { /lwtverb/hyphenate },
+    /lwtverb/m/.new style* = { /lwtverb/monospaced }
+}
+
+\DeclareDocumentCommand\@lwtverb@makespace{}{%
+    \hspace{0.4em%
+        plus \option{/lwtverb/possp}%
+        minus \option{/lwtverb/negsp}}%
+}
+\DeclareDocumentCommand\@lwtverb@makehardspace{}{%
+    \hspace*{0.4em%
+        plus \option{/lwtverb/possp}%
+        minus \option{/lwtverb/negsp}}%
+}
+\DeclareDocumentCommand\@lwtverb@makekern{}{%
+    \hspace*{0pt%
+        plus \option{/lwtverb/poskrn}%
+        minus \option{/lwtverb/negkrn}}%
+}
+\DeclareDocumentCommand\@lwtverb@makespacekern{}{%
+    \hspace{0pt%
+        plus \option{/lwtverb/poskrn}%
+        minus \option{/lwtverb/negkrn}}%
+}
+\DeclareDocumentCommand\@lwtverb@makediscretionary{}{%
+    \discretionary{%
+        \hbox{\option{/lwtverb/breaksymr}}%
+    }{%
+        \hbox{\option{/lwtverb/breaksyml}}%
+    }{}%
+}
+\DeclareDocumentCommand\@lwtverb@decoratedspace{m}{%
+    \ifoptionvoid{/lwtverb/spacebox}{%
+        \ifnum\option{/lwtverb/gobble/@ord}=0% verbatim
+            \allowbreak%
+            \@lwtverb@makehardspace%
+        \else%
+            \@lwtverb@makespace%
+        \fi%
+    }{%
+        \@lwtverb@makespacekern%
+        \allowbreak%
+        \option{/lwtverb/spacebox}%
+    }%
+}
+\DeclareDocumentCommand\@lwtverb@decoratednonspace{m m}{%
+    \ifoptionvoid{/lwtverb/decoration2}{%
+        \option{/lwtverb/decoration}{#1}%
+    }{%
+        \option{/lwtverb/decoration2}{#1}{#2}%
+    }%
+}
+\DeclareDocumentCommand\@lwtverb@breakablechar{m m}{%
+    \ifx\@sptoken#1%
+        \ifcase\option{/lwtverb/gobble/@ord}%
+            % verbatim
+            \@lwtverb@decoratedspace{#1}%
+        \or% no
+            \@lwtverb@decoratedspace{#1}%
+        \or% extra
+            \ifx\@sptoken#2%
+            \else%
+                \@lwtverb@decoratedspace{#1}%
+            \fi%
+        \else% all
+        \fi%
+    \else%
+        \ifx\@sptoken#2%
+        \else%
+            \@lwtverb@makekern%
+            \option{/lwtverb/breakhandler}{#1}{#2}{\@lwtverb@makediscretionary}%
+        \fi%
+        \@lwtverb@decoratednonspace{#1}{#2}%
+    \fi%
+}
+
+\DeclareDocumentCommand\@lwtverb@process{m m m m}{%
+    {\options{/lwtverb,#1}%
+        \def\gobblechar{\let\xchar= }%
+        \def\assignthencheck{%
+            \afterassignment\xloop\gobblechar}%
+        \let\xprevchar=\relax%
+        \def\xloop{%
+            \ifx\relax\xchar%
+                \let\next=\relax%
+            \else%
+                \@lwtverb@breakablechar{\xchar}{\xprevchar}%
+                \let\xprevchar= \xchar\relax%
+                \let\next=\assignthencheck%
+            \fi%
+            \next}%
+        {#2{\expandafter\assignthencheck\detokenize{#4}\relax}#3}}%
+}
+
+\DeclareDocumentCommand\lwtverb{O{}}{%
+    \Collectverb{\@lwtverb@process{#1}{\tt}{}}%
+}
+\DeclareDocumentCommand\lwtcode{O{}}{\lwtverb[w,#1]}
+\DeclareDocumentCommand\lwttt{O{} m}{%
+    \@lwtverb@process{#1}{\tt}{}{#2}%
+}
+
+\newcommand*\@lwtverb@justify{%
+  \fontdimen2\font=0.4em% interword space
+  \fontdimen3\font=0.2em% interword stretch
+  \fontdimen4\font=0.1em% interword shrink
+  \fontdimen7\font=0.1em% extra space
+  % \hyphenchar\font=`\- fails in book documentclass for some reason
+  \hyphenchar\font=`-% allowing hyphenation
+}
+\DeclareDocumentCommand\justtt{m}{{\tt\@lwtverb@justify{#1}}}
+\DeclareDocumentCommand\justverb{m}{{\tt\@lwtverb@justify{\detokenize{#1}}}}
+
+%% 
+%%
+%% End of file `lwtverb.sty'.
