@@ -553,7 +553,7 @@
 % Synonym of \c!breaksymr={}, breaksyml={}!.
 %
 % \DescribeMacro{wrapline, w}
-% Synonym of \c!breaksymr={\tiny$\hookrightarrow$}, breaksyml={}!.
+% Synonym of \c!breaksymr=<hookedarrow>, breaksyml={}!.
 %
 % \DescribeMacro{hyphenate, h}
 % Synonym of \c!breaksymr={-}, breaksyml={}!.
@@ -768,7 +768,10 @@
     /lwtverb/wrapline/.new style* = {
         /lwtverb/h,
         /lwtverb/breaksymr = {},
-        /lwtverb/breaksyml = {\tiny$\hookrightarrow$},
+        /lwtverb/breaksyml = {%
+            \makebox[\@lwtverb@hardspwidth+\@lwtverb@hardspwidth]{%
+                \tiny$\hookrightarrow$}%
+        },
     },
     /lwtverb/hyphenate/.new style* = {
         /lwtverb/breaksymr = {-},

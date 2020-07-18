@@ -100,7 +100,10 @@
     /lwtverb/wrapline/.new style* = {
         /lwtverb/h,
         /lwtverb/breaksymr = {},
-        /lwtverb/breaksyml = {\tiny$\hookrightarrow$},
+        /lwtverb/breaksyml = {%
+            \makebox[\@lwtverb@hardspwidth+\@lwtverb@hardspwidth]{%
+                \tiny$\hookrightarrow$}%
+        },
     },
     /lwtverb/hyphenate/.new style* = {
         /lwtverb/breaksymr = {-},
