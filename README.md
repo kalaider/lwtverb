@@ -18,7 +18,7 @@ Just like a normal `\verb`.
 
 \begin{document}
 \begin{minipage}{5cm}
-\lwtverb[wraplines]+this_very_long_name_will_be_wrapped_and_all_line_breaks_will_be_indicated+.
+\lwtverb[wrapline]+this_very_long_name_will_be_wrapped_and_all_line_breaks_will_be_indicated+.
 \end{minipage}
 \end {document}
 ```
