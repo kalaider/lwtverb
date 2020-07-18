@@ -160,10 +160,13 @@
         \hbox{\option{/lwtverb/breaksyml}}%
     }{}%
 }
-\DeclareDocumentCommand\@lwtverb@decoratedspace{m}{%
+\DeclareDocumentCommand\@lwtverb@decoratedspace{m m}{%
     \ifoptionvoid{/lwtverb/spacebox}{%
         \ifnum\option{/lwtverb/gobble/@ord}=0% verbatim
-            \allowbreak%
+            \ifx\relax#2%
+            \else%
+                \allowbreak%
+            \fi%
             \@lwtverb@makehardspace%
         \else%
             \@lwtverb@makespace%
@@ -185,13 +188,13 @@
     \ifx\@sptoken#1%
         \ifcase\option{/lwtverb/gobble/@ord}%
             % verbatim
-            \@lwtverb@decoratedspace{#1}%
+            \@lwtverb@decoratedspace{#1}{#2}%
         \or% no
-            \@lwtverb@decoratedspace{#1}%
+            \@lwtverb@decoratedspace{#1}{#2}%
         \or% extra
             \ifx\@sptoken#2%
             \else%
-                \@lwtverb@decoratedspace{#1}%
+                \@lwtverb@decoratedspace{#1}{#2}%
             \fi%
         \else% all
         \fi%

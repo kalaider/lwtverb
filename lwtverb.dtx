@@ -272,14 +272,17 @@
 % \end{table}
 % \begin{table}[H]
 %     \centering
-%     \begin{tabular}{l|l}
-%         \c[showspaces]|r1 = x;      // A| & \c[m]|r2 = y;      // D| \\
-%         \c[showspaces]|if (r1 != 0) // B| & \c[m]|if (r2 != 0) // E| \\
-%         \c[showspaces]|    y = 1;   // C| & \c[m]|    x = 1;   // F|
+%     \begin{tabular}{|p{3.2cm}|p{3.2cm}|p{3.2cm}|}
+%         \c[monospaced]|r1 = x;      // A| & \c|r1 = x;      // A| & \c[showspaces]|r1 = x;      // A| \\
+%         \c[monospaced]|if (r1 != 0) // B| & \c|if (r1 != 0) // B| & \c[showspaces]|if (r1 != 0) // B| \\
+%         \c[monospaced]|    y = 1;   // C| & \c|    y = 1;   // C| & \c[showspaces]|    y = 1;   // C|
 %     \end{tabular}
 %     \caption[]{This example demonstrates the power of \t{monospaced} option
-%                (note that \t{D}, \t{E} and \t{F} are properly aligned) and
-%                compares it with the result of \t{showspaces} option}
+%                (note that \t{A}, \t{B} and \t{C} are properly aligned) and
+%                compares it with the result of default and \t{showspaces} options.
+%                The table itself is typeset using fixed-width \c|p{...}| columns.
+%                The issue with default options originates from different
+%                space widths used in default and \t{monospaced}-like styles}
 % \end{table}
 
 
@@ -892,17 +895,29 @@
 %    takes \t{spacebox} option into account.
 %    \begin{arguments}
 %        \item The space character (ignored)
+%        \item The previous character
 %    \end{arguments}
 %    \begin{macrocode}
-\DeclareDocumentCommand\@lwtverb@decoratedspace{m}{%
+\DeclareDocumentCommand\@lwtverb@decoratedspace{m m}{%
     \ifoptionvoid{/lwtverb/spacebox}{%
         \ifnum\option{/lwtverb/gobble/@ord}=0% verbatim
-            \allowbreak%
+%    \end{macrocode}
+% Forbid break at first char as it may cause extra break
+% in some rare cases (e.g. in \c|p{}| tabular cells).
+%    \begin{macrocode}
+            \ifx\relax#2%
+            \else%
+                \allowbreak%
+            \fi%
             \@lwtverb@makehardspace%
         \else%
             \@lwtverb@makespace%
         \fi%
     }{%
+%    \end{macrocode}
+% Same trick here leads to the problem solved above... so
+% leave it as is.
+%    \begin{macrocode}
         \@lwtverb@makespacekern%
         \allowbreak%
         \option{/lwtverb/spacebox}%
@@ -955,13 +970,13 @@
     \ifx\@sptoken#1%
         \ifcase\option{/lwtverb/gobble/@ord}%
             % verbatim
-            \@lwtverb@decoratedspace{#1}%
+            \@lwtverb@decoratedspace{#1}{#2}%
         \or% no
-            \@lwtverb@decoratedspace{#1}%
+            \@lwtverb@decoratedspace{#1}{#2}%
         \or% extra
             \ifx\@sptoken#2%
             \else%
-                \@lwtverb@decoratedspace{#1}%
+                \@lwtverb@decoratedspace{#1}{#2}%
             \fi%
         \else% all
         \fi%
