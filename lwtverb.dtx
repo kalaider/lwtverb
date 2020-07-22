@@ -681,6 +681,24 @@
 %<*package>
 % \fi
 
+% \subsection{Interaction with other packages}
+%
+% Suppress \pkg{hyperref} warnings if {\thispkg} is used in titles
+%    \begin{macrocode}
+\AtBeginDocument{
+    \@ifpackageloaded{hyperref}%
+    {
+        \pdfstringdefDisableCommands{
+            \def\lwtverb{}
+            \def\lwtcode{}
+            \def\lwttt{}
+            \def\justtt{}
+            \def\justverb{}
+        }
+    }{}
+}
+%    \end{macrocode}
+
 % \subsection{Package Options}
 %
 % Additional stretching to be added after each non-space char

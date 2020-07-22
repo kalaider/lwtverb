@@ -45,6 +45,19 @@
 
 
 
+\AtBeginDocument{
+    \@ifpackageloaded{hyperref}%
+    {
+        \pdfstringdefDisableCommands{
+            \def\lwtverb{}
+            \def\lwtcode{}
+            \def\lwttt{}
+            \def\justtt{}
+            \def\justverb{}
+        }
+    }{}
+}
+
 \DeclareOptionX{poskrn}{%
     \DeclareDocumentCommand\@lwtverb@poskrn{}{#1}}
 \DeclareOptionX{negkrn}{%
